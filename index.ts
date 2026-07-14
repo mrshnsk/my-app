@@ -23,14 +23,19 @@ app.get("/", async (req, res) => {
 });
 
 // 新しいユーザーを追加する処理
+// ...省略（Part 5 で作った Express の設定）
 app.post("/users", async (req, res) => {
   const name = req.body.name;
+  const age = req.body.age ? Number(req.body.age) : null;
   if (name) {
-    const newUser = await prisma.user.create({ data: { name } });
-    console.log("追加したぞ:", newUser);
+    await prisma.user.create({ data: { name, age } });
   }
   res.redirect("/");
 });
+// ...省略
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
