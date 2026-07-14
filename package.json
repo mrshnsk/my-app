@@ -19,5 +19,17 @@
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "pg": "^8.22.0"
-  }
+  },
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrshnsk/my-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrshnsk/my-app/issues"
+  },
+  "homepage": "https://github.com/mrshnsk/my-app#readme"
 }

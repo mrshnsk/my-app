@@ -14,5 +14,7 @@ datasource db {
 model User {
   id   Int    @id @default(autoincrement())
   name String
+  age  Int?   // 「?」をつけることで、これまでのデータに年齢がなくてもエラーにならんようにするぞ
 }
+
 
