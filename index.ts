@@ -26,9 +26,9 @@ app.get("/", async (req, res) => {
 // ...省略（Part 5 で作った Express の設定）
 app.post("/users", async (req, res) => {
   const name = req.body.name;
-  const age = req.body.diff ? Number(req.body.diff) : null;
+  const age = req.body.age ? Number(req.body.age) : null;
   if (name) {
-    await prisma.user.create({ data: { name, diff } });
+    await prisma.user.create({ data: { name, age } });
   }
   res.redirect("/");
 });
