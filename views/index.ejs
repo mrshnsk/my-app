@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ユーザー一覧</title>
+  <title>支出一覧</title>
 </head>
 <body>
-  <h1>ユーザー一覧</h1>
+  <h1>支出一覧</h1>
   <ul>
   <% users.forEach(user => { %>
     <li><%= user.name %>（<%= user.diff ? user.diff + '円\' : '収支未設定' %>）</li>
