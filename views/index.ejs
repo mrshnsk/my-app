@@ -8,7 +8,7 @@
   <h1>支出一覧</h1>
   <ul>
   <% users.forEach(user => { %>
-    <li><%= user.name %>（<%= user.age ? user.age + '円\' : '収支未設定' %>）</li>
+    <li><%= user.name %>（<%= user.age ? user.age + '円\' : '名称未設定' %>）</li>
   <% }) %>
 </ul>
 <form action="/users" method="post">
