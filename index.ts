@@ -1,9 +1,18 @@
+import 'dotenv/config'; 
 import express from 'express';
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '../generated/prisma/client';
 import multer from 'multer';
+import pg from 'pg';                          // 👈 追加
+import { PrismaPg } from '@prisma/adapter-pg'; // 👈 追加
 
 const app = express();
-const prisma = new PrismaClient();
+
+// PostgreSQLへの接続プールを作成し、Prisma用のアダプターに変換します 👈 追加
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+
+// 新しいPrisma 7の仕様に合わせて初期化 👈 変更
+const prisma = new PrismaClient({ adapter });
 const upload = multer();
 
 app.set('view engine', 'ejs');
