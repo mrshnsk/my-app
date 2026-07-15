@@ -110,36 +110,7 @@ app.post('/expenses', async (req, res) => {
   }
 });
 
-// 1. 入力：レシート画像入力をもとにデータ化（OCR/AI解析のモック処理）
-app.post('/expenses/upload-receipt', upload.single('receiptImage'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send('画像ファイルがアップロードされていません。');
-    }
 
-    // 【本来の実装】ここにGemini API等のマルチモーダルAIを用いた画像解析処理を組み込みます。
-    // 例: AIにレシート画像を送信し、日付・店名・品目・金額をJSONで返却させる
-    
-    // 以下はOCR解析結果のシミュレート（モックデータ）です
-    const mockParsedData = {
-      date: new Date(),
-      storeName: 'Bスーパーマーケット',
-      category: '食品',
-      details: 'レシート自動解析（牛乳, キャベツ, 豚肉）',
-      amount: Math.floor(Math.random() * 3000) + 1500 // 1500〜4500円のランダム値
-    };
-
-    // 解析されたデータをDBに登録
-    await prisma.expense.create({
-      data: mockParsedData
-    });
-
-    res.redirect('/');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('レシートの自動解析に失敗しました。');
-  }
-});
 
 app.listen(3000, () => {
   console.log('家計簿アプリがポート3000で起動しました。');
