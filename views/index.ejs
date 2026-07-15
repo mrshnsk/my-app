@@ -2,24 +2,162 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>支出一覧</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支出分析ダッシュボード</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f6f9; }
+    h1, h2, h3 { color: #2c3e50; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    h2 { border-left: 5px solid #3498db; padding-left: 10px; margin-top: 30px; }
+    section { background: #fff; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 500px; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; }
+    input, select, button { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+    button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    button:hover { background-color: #2980b9; }
+    .btn-ocr { background-color: #2ecc71; }
+    .btn-ocr:hover { background-color: #27ae60; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+    th { background-color: #f8fafc; color: #64748b; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    .info-box { background-color: #e0f2fe; color: #0369a1; padding: 12px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; }
+    .rank-list { padding-left: 20px; font-size: 16px; }
+    .rank-list li { margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-  <h1>支出一覧</h1>
-<!-- 修正後のイメージじゃ -->
-<ul>
-  <% users.forEach(user => { %>
-    <li>
-      <%= user.name %>（<%= user.age ? user.age + '歳' : '名称未設定' %>）
-    </li>
-  <% }) %>
-</ul>
 
-<form action="/users" method="post">
-  <input type="text" name="name" placeholder="支出内容" required>
-  <input type="number" name="age" placeholder="収支">
-  <button type="submit">追加</button>
-</form>
+  <h1>家計簿 支出分析ダッシュボード</h1>
 
+  <!-- 1. 入力セクション -->
+  <section>
+    <h2>1. データの入力</h2>
+    
+    <h3>📷 レシート画像から自動登録</h3>
+    <div class="info-box">
+      レシートの全体が写っている画像をアップロードすると、日付、店舗、支出額、内容が自動的にデータ化されます。
+    </div>
+    <form action="/expenses/upload-receipt" method="post" enctype="multipart/form-data" class="form-group">
+      <div class="form-row">
+        <input type="file" name="receiptImage" accept="image/*" required>
+      </div>
+      <button type="submit" class="btn-ocr">レシート画像から自動入力</button>
+    </form>
+    
+    <br><hr><br>
+    
+    <h3>✍️ 手動で入力する</h3>
+    <form action="/expenses" method="post" class="form-group">
+      <div class="form-row">
+        <label>日付</label>
+        <input type="date" name="date" required>
+      </div>
+      <div class="form-row">
+        <label>購入した店</label>
+        <input type="text" name="storeName" placeholder="例: Aスーパー、コンビニX" required>
+      </div>
+      <div class="form-row">
+        <label>カテゴリ（種類）</label>
+        <input type="text" name="category" placeholder="例: 食品、日用品、交際費" required>
+      </div>
+      <div class="form-row">
+        <label>支出の内容</label>
+        <input type="text" name="details" placeholder="例: 夕食の食材、トイレットペーパー" required>
+      </div>
+      <div class="form-row">
+        <label>支出額（円）</label>
+        <input type="number" name="amount" placeholder="金額を入力" required>
+      </div>
+      <button type="submit">支出データを追加</button>
+    </form>
+  </section>
 
+  <!-- 2. 処理・分析：店舗別合計金額 -->
+  <section>
+    <h2>2. 店舗別の購入金額合計（店舗分析）</h2>
+    <% if (storeAnalysis.length === 0) { %>
+      <p>データがありません。支出を登録してください。</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>店舗名</th>
+            <th>合計購入金額</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% storeAnalysis.forEach(store => { %>
+            <tr>
+              <td><strong><%= store.storeName %></strong></td>
+              <td><%= store.totalAmount.toLocaleString() %> 円</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
 
+  <!-- 3. 表示：支出が多い順（削減候補） -->
+  <section>
+    <h2>3. 項目別支出（削減できそうな項目：支出金額順）</h2>
+    <p>食品など類似する種類のものは同じカテゴリとしてまとめられ、支出が多い順に並んでいます。</p>
+    <% if (categoryAnalysis.length === 0) { %>
+      <p>データがありません。</p>
+    <% } else { %>
+      <ol class="rank-list">
+        <% categoryAnalysis.forEach(cat => { %>
+          <li><strong><%= cat.category %></strong>: <%= cat.totalAmount.toLocaleString() %> 円</li>
+        <% }) %>
+      </ol>
+    <% } %>
+  </section>
+
+  <!-- 3. 表示：支出額の変動が多い項目 -->
+  <section>
+    <h2>4. 支出額の変動が多い項目（月別ボラティリティ順）</h2>
+    <p>月ごとの支出額の変動（標準偏差）が大きい項目です。毎月の支出にムラがあり、見直すことで節約に繋げやすい項目を示しています。</p>
+    <% if (volatileAnalysis.length === 0) { %>
+      <p>データがありません。</p>
+    <% } else { %>
+      <ul>
+        <% volatileAnalysis.forEach(v => { %>
+          <li><strong><%= v.category %></strong> (変動スコア: <%= Math.round(v.volatility).toLocaleString() %>)</li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+
+  <!-- 履歴一覧 -->
+  <section>
+    <h2>支出明細履歴</h2>
+    <% if (expenses.length === 0) { %>
+      <p>登録されたデータはありません。</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>店舗名</th>
+            <th>カテゴリ</th>
+            <th>内容</th>
+            <th>金額</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% expenses.forEach(exp => { %>
+            <tr>
+              <td><%= exp.date.toISOString().substring(0, 10) %></td>
+              <td><%= exp.storeName %></td>
+              <td><%= exp.category %></td>
+              <td><%= exp.details %></td>
+              <td><%= exp.amount.toLocaleString() %> 円</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+</body>
+</html>

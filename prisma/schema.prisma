@@ -1,23 +1,19 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
-datasource db {
-  provider = "postgresql"
+// 変更後：家計簿支出データに特化したモデル設計
+model Expense {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())   // 1. 入力：日付
+  storeName String                     // 2. 処理：購入した店名
+  category  String                     // 3. 表示：食品などの類似カテゴリまとめ用
+  details   String                     // 1. 入力：支出の内容
+  amount    Int                        // 1. 入力：支出額
 }
-model User {
-  id   Int    @id @default(autoincrement())
-  name String
-  age  Int?
-}
-
-
-
-
-
