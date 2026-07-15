@@ -144,9 +144,9 @@ app.post('/expenses/upload-receipt', upload.single('receiptImage'), async (req, 
       }
     `;
 
-    // 3. Gemini-2.0-flash モデルで画像を解析
+    // 3. Gemini-1.5-flash モデルで画像を解析
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       contents: [prompt, imagePart],
     });
 
