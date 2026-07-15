@@ -13,6 +13,8 @@ const adapter = new PrismaPg(pool);
 
 // 新しいPrisma 7の仕様に合わせて初期化 👈 変更
 const prisma = new PrismaClient({ adapter });
+// Gemini APIの初期化（環境変数 GEMINI_API_KEY を使用）
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const upload = multer();
 
 app.set('view engine', 'ejs');
@@ -110,6 +112,65 @@ app.post('/expenses', async (req, res) => {
   }
 });
 
+// 📷 1. 入力：本物のGemini AIを用いてレシート画像から構造化データを抽出
+app.post('/expenses/upload-receipt', upload.single('receiptImage'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send('画像ファイルがアップロードされていません。');
+    }
+
+    // 1. 画像ファイルをAIが読み込める形式（Base64）に変換
+    const imageBase64 = req.file.buffer.toString('base64');
+    const imagePart = {
+      inlineData: {
+        data: imageBase64,
+        mimeType: req.file.mimetype
+      }
+    };
+
+    // 2. AIへ送る指示（プロンプト）の作成
+    const prompt = `
+      このレシート画像から「日付」「店舗名」「カテゴリ」「購入内容」「合計金額」を読み取り、
+      必ず以下のJSONオブジェクトの形式のみで返答してください。余計な説明や挨拶は一切含めないでください。
+
+      返答のJSONフォーマット:
+      {
+        "date": "YYYY-MM-DD 形式の日付（レシートに記載の日付、不明なら今日の年月日）",
+        "storeName": "店舗名（例：Aスーパー）",
+        "category": "食費、日用品、交際費、交通費、娯楽費、その他のいずれか適切なものを1つ選択",
+        "details": "購入した主な商品の名前（例：牛乳、パン、卵）",
+        "amount": 合計支払い金額（半角数字のみ、カンマなし。例: 1580）
+      }
+    `;
+
+    // 3. Gemini-2.5-flash モデルで画像を解析
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [prompt, imagePart],
+    });
+
+    const aiText = response.text || '{}';
+    // AIの出力からMarkdownブロック（```json ... ```）を綺麗に除去
+    const jsonString = aiText.replace(/```json|```/g, '').trim();
+    const parsedData = JSON.parse(jsonString);
+
+    // 4. AIが抽出した本物のデータをデータベースに登録
+    await prisma.expense.create({
+      data: {
+        date: new Date(parsedData.date || new Date()),
+        storeName: parsedData.storeName || '不明な店舗',
+        category: parsedData.category || 'その他',
+        details: parsedData.details || 'レシート解析データ',
+        amount: Number(parsedData.amount) || 0
+      }
+    });
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('AI解析エラー:', error);
+    res.status(500).send('レシートのAI自動解析に失敗しました。');
+  }
+});
 
 
 app.listen(3000, () => {
