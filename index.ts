@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import pg from 'pg';                          // 👈 追加
 import { PrismaPg } from '@prisma/adapter-pg'; // 👈 追加
+import { GoogleGenAI } from '@google/genai';
 
 const app = express();
 
