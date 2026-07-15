@@ -1,6 +1,6 @@
 import 'dotenv/config'; 
 import express from 'express';
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import pg from 'pg';                          // 👈 追加
 import { PrismaPg } from '@prisma/adapter-pg'; // 👈 追加
